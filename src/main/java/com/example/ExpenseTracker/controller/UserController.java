@@ -7,6 +7,7 @@ import com.example.ExpenseTracker.websecurity.JwtTokenProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.annotation.Secured;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.DisabledException;
@@ -55,14 +56,14 @@ public class UserController {
     }
 
     @ResponseBody
-    @ResponseStatus(HttpStatus.NO_CONTENT)
     @DeleteMapping
-    public ResponseEntity<String> deleteUser(@RequestParam String userName, @RequestHeader String Token) {
+    @Secured("ROLE_USER")
+    public ResponseEntity<String> deleteUser(@RequestParam String username) {
         try {
-            userService.deleteUser(userName);
+            userService.deleteUser(username);
             return ResponseEntity.ok("Successfully deleted.");
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unable to delete User: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Unable to delete User: " + e.getMessage());
         }
     }
 

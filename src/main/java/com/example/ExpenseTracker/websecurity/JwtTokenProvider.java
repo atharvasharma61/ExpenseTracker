@@ -14,12 +14,12 @@ import java.util.Map;
 
 @Component
 public class JwtTokenProvider {
-    private final String secretKey;
+    private final SecretKey secretKey;
     private final long validityInMs;
     private final JwtConfig jwtConfig;
 
     public JwtTokenProvider(JwtConfig jwtConfig) {
-        this.secretKey = jwtConfig.getSecretKey();
+        this.secretKey = jwtConfig.getSecretKeyForSigning();
         this.validityInMs = jwtConfig.getValidityInMs();
         this.jwtConfig = jwtConfig;
     }
@@ -30,10 +30,9 @@ public class JwtTokenProvider {
     }
 
     private String doGenerateToken(Map<String, Object> claims, String subject) {
-        SecretKey secretKey = jwtConfig.getSecretKeyForSigning();
         return Jwts.builder().setClaims(claims).setSubject(subject).setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + 3600 * 1000))
-                .signWith(SignatureAlgorithm.HS512, secretKey).compact();
+                .setExpiration(new Date(System.currentTimeMillis() + 5 * 3600 * 1000))
+                .signWith(SignatureAlgorithm.HS512, this.secretKey).compact();
     }
 
     public boolean validateToken(String token, UserDetails userDetails) {
@@ -42,12 +41,12 @@ public class JwtTokenProvider {
     }
 
     public String getUsernameFromToken(String token) {
-        Claims claims = Jwts.parser().setSigningKey(secretKey).parseClaimsJws(token).getBody();
+        Claims claims = Jwts.parser().setSigningKey(this.secretKey).parseClaimsJws(token).getBody();
         return claims.getSubject();
     }
 
     private Boolean isTokenExpired(String token) {
-        Claims claims = Jwts.parser().setSigningKey(secretKey).parseClaimsJws(token).getBody();
+        Claims claims = Jwts.parser().setSigningKey(this.secretKey).parseClaimsJws(token).getBody();
         final Date expiration = claims.getExpiration();
         return expiration.before(new Date());
     }
